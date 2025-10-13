@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Persona AI Chatbot</title>
+</head>
+<body>
+    <h1>Persona AI 챗봇 (아이)</h1>
+    <div id="chat-box"></div>
+    <input type="text" id="user-input" placeholder="메시지를 입력하세요">
+    <button onclick="sendMessage()">전송</button>
+
+    <script>
+        function sendMessage() {
+            const inputElement = document.getElementById('user-input');
+            const message = inputElement.value;
+            if (!message) return;
+
+            document.getElementById('chat-box').innerHTML += `<p><strong>나:</strong> ${message}</p>`;
+            inputElement.value = '';
+
+            // API 호출 (user_id 1로 테스트)
+            fetch('/api/send_message/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message, user_id: 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const aiResponse = data.response || data.error;
+                document.getElementById('chat-box').innerHTML += `<p><strong>아이:</strong> ${aiResponse}</p>`;
+            })
+            .catch(error => {
+                document.getElementById('chat-box').innerHTML += `<p style="color: red;">오류: 서버 통신 실패</p>`;
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
