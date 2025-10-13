@@ -31,3 +31,4 @@ typing_extensions==4.15.0
 typing-inspection==0.4.2
 tzdata==2025.2
 urllib3==2.5.0
+gunicorn
