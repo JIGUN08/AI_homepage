@@ -2,7 +2,6 @@ from openai import OpenAI
 from pinecone import Pinecone, ServerlessSpec
 from typing import List, Dict
 from datetime import datetime
-from dotenv import load_dotenv
 from django.shortcuts import render
 import os
 from django.http import JsonResponse
@@ -10,14 +9,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json 
 
-
-load_dotenv()
+PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
 
 def get_pinecone_index():
     """Pinecone 클라이언트를 초기화하고 인덱스를 반환하는 함수"""
     PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
     PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT")
-    PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
     
     # 환경 변수 체크
     if not PINECONE_API_KEY or not PINECONE_ENVIRONMENT or not PINECONE_INDEX_NAME:
