@@ -116,3 +116,64 @@ def send_chat_message(request):
             {"error": "서버 처리 중 알 수 없는 오류가 발생했습니다."}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+from rest_framework import serializers
+from ..models import Room, FurnitureItem # Room, FurnitureItem 모델 임포트
+
+# ----------------------------------------------------
+# 기존 채팅 Serializer
+# ----------------------------------------------------
+class ChatPairSerializer(serializers.Serializer):
+    """
+    Flutter의 ChatMessageModel (사용자 메시지와 AI 응답 한 쌍) 형식에 맞춰
+    데이터를 직렬화하기 위한 커스텀 Serializer입니다.
+    
+    이 Serializer는 뷰에서 직접 가공한 딕셔너리(메시지 쌍)를 받습니다.
+    """
+    # Flutter model: id (AI message ID), userMessage, aiResponse, timestamp (AI message timestamp)
+    
+    id = serializers.IntegerField(help_text="AI 응답 메시지의 고유 ID")
+    user_message = serializers.CharField(source='user_msg', help_text="사용자가 보낸 메시지 텍스트")
+    ai_response = serializers.CharField(source='ai_msg', help_text="AI가 응답한 메시지 텍스트")
+    timestamp = serializers.DateTimeField(help_text="AI 응답이 생성된 시간")
+    
+    # Python의 snake_case(user_msg)를 Flutter의 camelCase(userMessage)로 변환하고
+    # DateTime 객체를 ISO 8601 형식의 문자열로 변환합니다.
+    def to_representation(self, instance):
+        return {
+            'id': instance['id'],
+            'user_message': instance['user_msg'],
+            'ai_response': instance['ai_msg'],
+            'timestamp': instance['timestamp'].isoformat(),
+        }
+
+# ----------------------------------------------------
+# 🌟 신규: 가구 인테리어 Serializers 🌟
+# ----------------------------------------------------
+class FurnitureItemSerializer(serializers.ModelSerializer):
+    """
+    FurnitureItem 모델을 Flutter용 JSON으로 변환합니다.
+    """
+    class Meta:
+        model = FurnitureItem
+        # id는 자동으로 포함되며, room 필드는 RoomSerializer에서 처리합니다.
+        fields = (
+            'id', 'item_type', 'position_x', 'position_y', 'position_z', 
+            'rotation', 'scale', 'custom_name'
+        )
+        read_only_fields = ('id',) # id는 생성 시 자동으로 부여
+
+class RoomSerializer(serializers.ModelSerializer):
+    """
+    Room 모델과 이에 속한 모든 FurnitureItem을 함께 직렬화합니다.
+    """
+    # related_name='furniture_items'를 사용하여 가구 목록을 Nested Serializer로 포함
+    furniture_items = FurnitureItemSerializer(many=True, read_only=True) 
+
+    class Meta:
+        model = Room
+        # user는 primary_key이고 요청 시점에서 결정되므로 fields에서 제외합니다.
+        fields = ('room_name', 'background_style', 'furniture_items', 'last_updated')
+        read_only_fields = ('furniture_items', 'last_updated') 
+
